@@ -82,6 +82,7 @@ We welcome open-source contributors, students, and mentors.
   - Expand soundfont set and caching.
   - Add accessibility fixtures (color/size schemas) to visualization.
   - Write sample prompts + tutorials for common classroom needs.
+- **Open mini-project:** Build a browser renderer that converts generated JSON exercises into Western staff notation. Details: `docs/notation-challenge.md`.
 
 ## Academic & Classroom Use
 - **Research:** The framework can act as a controllable stimulus generator for studies in music learning, HCI, or accessibility. Cite the project and include prompt + parameter logs for reproducibility.
