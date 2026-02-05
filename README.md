@@ -17,11 +17,13 @@ Open-source toolkit for generating **inclusive, pedagogically sound music exerci
 Traditional method books assume a “standard” learner. HarmonyHub flips that by generating practice materials that adapt to the learner: key, level, time signature, focus, and accessibility needs. Outputs can be visual, auditory, or multi-sensory—ready for classrooms, community music programs, or individual study.
 
 ## Features at a Glance
-- 🎛️ Promptable exercise generation (instrument, level, key, time signature, focus).
-- 🎼 Multi-format outputs: JSON, MIDI, MP3; visualizations via piano roll. (MusicXML and adapted notation pathways in progress.)
-- ♿ Accessibility-first: enlarged/colored notation plans, Braille-friendly melodic export (simple melodies), and OSC/MIDI hooks for haptics.
-- 🧠 Pedagogical controls: rhythmic complexity, practice focus, tempo, measure length.
-- 🧰 Self-contained CLI plus modular Python library for research and integrations.
+- 🎛️ Promptable exercise generation via CLI (instrument, level, key, time signature, measures).
+- 🎼 Outputs today: JSON note data, MIDI, MP3 audio (soundfonts or fallback), and piano-roll visualization when requested.
+- 🎚️ Utilities: metronome generator; JSON→MIDI/MP3 converter.
+- 🧰 Modular Python library + Typer CLI for quick experiments and scripting.
+
+### Direction (theory + roadmap, not yet shipped)
+Grounded in disability studies and inclusive music pedagogy, HarmonyHub aims to add adaptable notation, accessibility-aware representations, and richer pedagogical controls. Those pieces are under active design and tracked in issues/roadmap.
 
 ## Get Started
 Prereqs: Python 3.10+ recommended; `fluidsynth` optional but improves audio quality.
