@@ -89,7 +89,7 @@ We welcome open-source contributors, students, and mentors.
 ## Academic & Classroom Use
 - **Research:** The framework can act as a controllable stimulus generator for studies in music learning, HCI, or accessibility. Cite the project and include prompt + parameter logs for reproducibility.
 - **Teaching:** Use the CLI to generate leveled drills, rhythm patterns, or call/response material. Export MIDI/MP3 for LMS uploads or play-alongs.
-- **Case studies:** Phase 2 focuses on participatory design with L’Arche London; we’re eager to partner on parallel studies—open an issue to discuss protocols and ethics.
+- **Case studies:** Phase 2 focuses on participatory design in community music settings; we’re eager to partner on parallel studies—open an issue to discuss protocols and ethics.
 
 ## Roadmap (2025–2026)
 - Phase 1: Robust generative backend, multiple representations, automated tests and docs.
