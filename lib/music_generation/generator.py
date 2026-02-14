@@ -15,7 +15,7 @@ from typing import Optional, List, Tuple, Dict, Any
 
 # Default API settings
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
-MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY", "bPj0wARXs5dk2L1ipFOdoqHMmQnXuMNv")
+MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY")
 
 
 def scale_json_durations(json_data: List[Dict[str, Any]], target_units: int) -> List[Dict[str, Any]]:
