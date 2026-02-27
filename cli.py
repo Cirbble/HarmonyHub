@@ -13,6 +13,10 @@ import shutil
 from enum import Enum
 from typing import Optional, List, Tuple
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import rich for better CLI output
 from rich.console import Console

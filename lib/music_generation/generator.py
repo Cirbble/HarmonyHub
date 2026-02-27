@@ -12,6 +12,10 @@ import re
 import os
 import requests
 from typing import Optional, List, Tuple, Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Default API settings
 MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"

@@ -32,3 +32,5 @@ soundfonts/
 .env
 .env.*
 
+#where I store the API keys 
+personal_stuff.txt

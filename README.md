@@ -35,9 +35,29 @@ pip install -r requirements.txt
 # Optional: ensure fluidsynth is available for rich soundfonts
 ```
 
+### Configure Mistral API Key
+The project uses the Mistral API to generate music exercises. You need to set up your API key:
+
+1. Sign up for a Mistral API account at [https://console.mistral.ai/](https://console.mistral.ai/)
+2. Create an API key from your dashboard
+3. Edit the `.env` file in the project root and replace `your_mistral_api_key_here` with your actual API key
+
+```bash
+# .env file
+MISTRAL_API_KEY=your_actual_api_key_here
+```
+
+Alternatively, you can set the environment variable directly:
+```bash
+export MISTRAL_API_KEY=your_actual_api_key_here  # Linux/Mac
+set MISTRAL_API_KEY=your_actual_api_key_here     # Windows CMD
+$env:MISTRAL_API_KEY="your_actual_api_key_here"  # Windows PowerShell
+```
+
 ### Smoke test
 ```bash
 python cli.py generate --instrument Trumpet --level Intermediate --key "C Major" --time-signature "4/4" --measures 4 --output-format all
+```
 ```
 Outputs are saved under `./output` (JSON, MIDI, MP3, visualization PNG when `--output-format all`).
 
