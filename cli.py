@@ -29,6 +29,8 @@ from lib.music_generation.theory import clean_note_string
 from processing.midi.converter import json_to_midi, create_metronome_midi
 from processing.audio.converter import midi_to_mp3, create_metronome_audio
 from processing.visualization.visualizer import create_visualization
+from processing.musicxml.converter import convert_to_musicxml
+from processing.musicxml.pdf_renderer import convert_to_pdf
 
 # Create Typer app
 app = typer.Typer(help="Adaptive Music Exercise Generator CLI")
@@ -75,6 +77,8 @@ class OutputFormat(str, Enum):
     JSON = "json"
     MIDI = "midi"
     MP3 = "mp3"
+    MUSICXML = "musicxml"
+    PDF = "pdf"
     ALL = "all"
 
 
@@ -205,6 +209,36 @@ def generate(
                 output_files.append(("Visualization", viz_output))
         except Exception as e:
             console.print(f"[bold red]Error generating visualization: {e}[/bold red]")
+
+    # Generate MusicXML (required for both musicxml and pdf formats)
+    musicxml_out = None
+    if output_format in [OutputFormat.MUSICXML, OutputFormat.PDF, OutputFormat.ALL]:
+        # MusicXML converter reads from a JSON file; ensure one exists on disk
+        json_path_for_notation = os.path.join(output_dir, f"{base_filename}.json")
+        if not os.path.exists(json_path_for_notation):
+            with open(json_path_for_notation, "w") as f:
+                f.write(json_data)
+        try:
+            with console.status("[bold green]Generating MusicXML...[/bold green]"):
+                musicxml_out = os.path.join(output_dir, f"{base_filename}.musicxml")
+                convert_to_musicxml(
+                    json_path_for_notation, key_str, time_sig_str,
+                    output_path=musicxml_out,
+                )
+            output_files.append(("MusicXML", musicxml_out))
+        except Exception as e:
+            console.print(f"[bold red]Error generating MusicXML: {e}[/bold red]")
+            musicxml_out = None
+
+    # Generate PDF from MusicXML
+    if output_format in [OutputFormat.PDF, OutputFormat.ALL] and musicxml_out:
+        try:
+            with console.status("[bold green]Generating PDF...[/bold green]"):
+                pdf_out = os.path.join(output_dir, f"{base_filename}.pdf")
+                convert_to_pdf(musicxml_out, output_path=pdf_out)
+            output_files.append(("PDF", pdf_out))
+        except Exception as e:
+            console.print(f"[bold red]Error generating PDF: {e}[/bold red]")
 
     # Display results
     console.print("\n[bold green]Exercise generated successfully![/bold green]")
