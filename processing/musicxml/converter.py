@@ -3,14 +3,12 @@
 """
 MusicXML Converter
 ==================
-Converts HarmonyHub JSON exercise files to MusicXML format.
+Converts LLM JSON exercise files to .MusicXML format.
 
-Duration encoding: 1 unit = 1 eighth note (quarterLength 0.5).
-  1 → eighth, 2 → quarter, 3 → dotted quarter, 4 → half,
-  6 → dotted half, 8 → whole.
+Each unit of duration is counted as an eigth note
 
 Notes that cross a barline are automatically split and tied.
-Rests (note name == "rest") are never tied across barlines.
+Rests are denoted as note: "rest" in the json
 """
 
 import json
@@ -19,7 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 from music21 import clef as clef_module
-from music21 import key, meter, note, stream
+from music21 import key, metadata as metadata_module, meter, note, stream
 from music21 import tie as tie_module
 
 
@@ -108,6 +106,7 @@ def convert_to_musicxml(
     time_sig: str,
     clef: str = 'treble',
     output_path: Optional[str] = None,
+    title: str = '',
 ) -> str:
     """
     Convert a HarmonyHub JSON exercise file to a MusicXML file.
@@ -134,6 +133,9 @@ def convert_to_musicxml(
 
     # Build score/part structure
     score = stream.Score()
+    md = metadata_module.Metadata()
+    md.title = title or Path(file_path).stem
+    score.insert(0, md)
     part = stream.Part()
     score.append(part)
 

@@ -44,11 +44,14 @@ from svglib.svglib import svg2rlg
 _A4_VRV_W = 2100
 _A4_VRV_H = 2970
 
-_SVG_NS    = 'http://www.w3.org/2000/svg'
-_XLINK_NS  = 'http://www.w3.org/1999/xlink'
-_SVG_TAG   = f'{{{_SVG_NS}}}svg'
-_USE_TAG   = f'{{{_SVG_NS}}}use'
+_SVG_NS     = 'http://www.w3.org/2000/svg'
+_XLINK_NS   = 'http://www.w3.org/1999/xlink'
+_SVG_TAG    = f'{{{_SVG_NS}}}svg'
+_USE_TAG    = f'{{{_SVG_NS}}}use'
+_TITLE_TAG  = f'{{{_SVG_NS}}}title'
+_TEXT_TAG   = f'{{{_SVG_NS}}}text'
 _XLINK_HREF = f'{{{_XLINK_NS}}}href'
+_TSPAN_TAG  = f'{{{_SVG_NS}}}tspan'
 
 
 def _flatten_nested_svg(root: ET.Element) -> ET.Element:
@@ -137,6 +140,46 @@ def _inline_use_elements(root: ET.Element) -> ET.Element:
     return root
 
 
+def _fix_title_rendering(root: ET.Element) -> ET.Element:
+    """
+    Three svglib quirks with how verovio marks up its title text:
+
+    1. <title class="labelAttr">title</title> — SVG <title> elements are
+       tooltips/accessibility labels, not visible text. svglib incorrectly
+       renders them as visible characters, producing the spurious word
+       "title" in the PDF. Strip them entirely.
+
+    2. The enclosing <text font-size="0px"> — verovio sets 0px on the outer
+       element and relies on child <tspan> overrides for the real size.
+       svglib doesn't propagate tspan overrides, so it renders the text
+       invisibly. Remove the 0px attribute so the tspan size is used.
+
+    3. text-anchor="middle" and x/y position are set on the first child
+       <tspan>, not on the outer <text>. svglib only honours text-anchor on
+       <text>, so we promote those attributes up to the outer element.
+    """
+    for parent in root.iter():
+        for child in list(parent):
+            if child.tag == _TITLE_TAG:
+                parent.remove(child)
+
+    for elem in root.iter(_TEXT_TAG):
+        if elem.get('font-size') == '0px':
+            del elem.attrib['font-size']
+
+        # Promote centering attrs from the first tspan so svglib centres it
+        for child in elem:
+            if child.tag == _TSPAN_TAG and child.get('text-anchor') == 'middle':
+                elem.set('text-anchor', 'middle')
+                for attr in ('x', 'y'):
+                    val = child.get(attr)
+                    if val is not None:
+                        elem.set(attr, val)
+                break
+
+    return root
+
+
 def _preprocess_svg(svg_str: str) -> bytes:
     """Apply all SVG pre-processing steps before passing to svglib."""
     # Fix malformed 5-digit hex colours
@@ -145,6 +188,7 @@ def _preprocess_svg(svg_str: str) -> bytes:
     root = ET.fromstring(svg_str.encode('utf-8'))
     root = _flatten_nested_svg(root)
     root = _inline_use_elements(root)
+    root = _fix_title_rendering(root)
 
     return ET.tostring(root, encoding='unicode').encode('utf-8')
 
