@@ -8,6 +8,7 @@ Lightweight web interface for generating and viewing sheet music exercises.
 
 import json
 import os
+import shutil
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -16,6 +17,7 @@ from flask import Flask, jsonify, render_template, request, send_from_directory
 load_dotenv()
 
 from lib.music_generation.generator import generate_exercise
+from processing.audio.converter import midi_to_mp3
 from processing.midi.converter import json_to_midi
 from processing.musicxml.converter import convert_to_musicxml
 
@@ -65,16 +67,32 @@ def generate():
             time_signature,
             output_path=str(musicxml_path),
             title=base_filename,
+            instrument=instrument,
         )
 
         midi_obj = json_to_midi(notes, instrument, tempo, time_signature, measures)
         midi_obj.save(str(midi_path))
+
+        mp3_src, _ = midi_to_mp3(midi_obj, instrument)
+        if mp3_src and os.path.exists(mp3_src):
+            audio_ext = Path(mp3_src).suffix          # .mp3 or .wav depending on what worked
+            audio_dest = OUTPUT_DIR / f"{base_filename}{audio_ext}"
+            shutil.move(mp3_src, str(audio_dest))
     except Exception as e:
         return jsonify({"error": f"Conversion failed: {e}"}), 500
+
+    # Find whichever audio file was produced (prefer mp3, accept wav)
+    audio_dest = next(
+        (OUTPUT_DIR / f"{base_filename}{ext}" for ext in (".mp3", ".wav")
+         if (OUTPUT_DIR / f"{base_filename}{ext}").exists()),
+        None,
+    )
+    mp3_url = f"/output/{audio_dest.name}" if audio_dest else None
 
     return jsonify({
         "musicxml_url": f"/output/{base_filename}.musicxml",
         "midi_url":     f"/output/{base_filename}.mid",
+        "mp3_url":      mp3_url,
         "notes":        notes,
         "tempo":        tempo,
     })

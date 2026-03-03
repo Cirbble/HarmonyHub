@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HarmonyHub — Exercise Generator</title>
+  <title>HarmonyHub Challange Demo</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -146,6 +146,7 @@
 <body>
 
   <h1>HarmonyHub</h1>
+  <h1>Eric's Submission</h1>
 
   <form id="gen-form">
     <label>
@@ -221,6 +222,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@latest/build/opensheetmusicdisplay.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.6/build/Midi.js"></script>
   <script>
     const form = document.getElementById('gen-form');
     const btn = document.getElementById('gen-btn');
@@ -229,10 +231,27 @@
     const osmdContainer = document.getElementById('osmd-container');
 
     let osmd = null;
-    let currentNotes = [];
-    let currentTempo = 60;
-    let cursorTimes  = [];
-    let activeSynth  = null;
+    let currentNotes      = [];
+    let currentTempo      = 60;
+    let currentMidiUrl    = null;
+    let currentInstrument = 'Trumpet';
+    let cursorTimes       = [];
+    let activeSynth       = null;
+
+    // General MIDI instrument names used by the MusyngKite soundfont set on gleitz CDN
+    const SOUNDFONT_NAMES = {
+      'Trumpet': 'trumpet', 'Piano': 'acoustic_grand_piano',
+      'Violin':  'violin',  'Clarinet': 'clarinet', 'Flute': 'flute',
+    };
+
+    // Oscillator fallback if CDN is unreachable
+    const INSTRUMENT_SYNTH_OPTIONS = {
+      'Trumpet':  { oscillator: { type: 'sawtooth' }, envelope: { attack: 0.02,  decay: 0.1, sustain: 0.8, release: 0.1 } },
+      'Piano':    { oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.4, sustain: 0.0, release: 1.0 } },
+      'Violin':   { oscillator: { type: 'sawtooth' }, envelope: { attack: 0.1,   decay: 0.1, sustain: 0.9, release: 0.3 } },
+      'Clarinet': { oscillator: { type: 'square'   }, envelope: { attack: 0.02,  decay: 0.1, sustain: 0.8, release: 0.1 } },
+      'Flute':    { oscillator: { type: 'sine'     }, envelope: { attack: 0.05,  decay: 0.1, sustain: 0.7, release: 0.2 } },
+    };
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -289,8 +308,10 @@
         await osmd.load(data.musicxml_url);
         osmd.render();
 
-        currentNotes = data.notes;
-        currentTempo = data.tempo;
+        currentNotes      = data.notes;
+        currentTempo      = data.tempo;
+        currentMidiUrl    = data.midi_url;
+        currentInstrument = payload.instrument;
         document.getElementById('midi-download').href = data.midi_url;
         document.getElementById('transport').style.display = 'flex';
         buildCursorTimes();
@@ -321,22 +342,52 @@
       if (activeSynth) { activeSynth.dispose(); activeSynth = null; }
 
       const spb = 60.0 / currentTempo;  // seconds per beat
-      activeSynth = new Tone.Synth({ oscillator: { type: 'triangle' } }).toDestination();
 
-      // Schedule audio from JSON notes
-      let offsetBeats = 0;
-      for (const item of currentNotes) {
-        const durBeats = item.duration * 0.5;  // 8th-units → quarter beats
-        if (item.note.toLowerCase() !== 'rest') {
-          const scheduleTime = offsetBeats * spb;
-          const noteDur = durBeats * spb - 0.02;
-          (function(t, d) {
+      // Calculate total duration from notes (used for synth scheduling + auto-stop)
+      let totalBeats = 0;
+      for (const item of currentNotes) totalBeats += item.duration * 0.5;
+
+      try {
+        // Load real instrument samples from MusyngKite soundfont CDN
+        const sfName  = SOUNDFONT_NAMES[currentInstrument] || 'acoustic_grand_piano';
+        const baseUrl = `https://gleitz.github.io/midi-js-soundfonts/MusyngKite/${sfName}-mp3/`;
+        const sampleNotes = ['C3', 'Gb3', 'C4', 'Gb4', 'C5', 'Gb5', 'C6'];
+        const urls = {};
+        sampleNotes.forEach(n => { urls[n] = `${n}.mp3`; });
+
+        activeSynth = new Tone.Sampler({ urls, baseUrl }).toDestination();
+
+        // Parse the MIDI file so note scheduling matches exactly what the download plays
+        const midi = await Midi.fromUrl(currentMidiUrl);
+        await Tone.loaded();
+
+        midi.tracks.forEach(track => {
+          track.notes.forEach(note => {
             Tone.Transport.schedule(time => {
-              activeSynth.triggerAttackRelease(item.note, d, time);
-            }, t);
-          })(scheduleTime, noteDur);
+              activeSynth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+            }, note.time);
+          });
+        });
+      } catch (e) {
+        // Fallback: Tone.Synth oscillators (no internet / CDN blocked)
+        console.warn('Soundfont load failed, using synth fallback:', e);
+        if (activeSynth) { activeSynth.dispose(); activeSynth = null; }
+        const synthOpts = INSTRUMENT_SYNTH_OPTIONS[currentInstrument] || INSTRUMENT_SYNTH_OPTIONS['Trumpet'];
+        activeSynth = new Tone.Synth(synthOpts).toDestination();
+        let offsetBeats = 0;
+        for (const item of currentNotes) {
+          const durBeats = item.duration * 0.5;
+          if (item.note.toLowerCase() !== 'rest') {
+            const t = offsetBeats * spb;
+            const d = durBeats * spb - 0.02;
+            (function(schedTime, dur, noteName) {
+              Tone.Transport.schedule(time => {
+                activeSynth.triggerAttackRelease(noteName, dur, time);
+              }, schedTime);
+            })(t, d, item.note);
+          }
+          offsetBeats += durBeats;
         }
-        offsetBeats += durBeats;
       }
 
       // Schedule cursor advances from OSMD scan
@@ -354,7 +405,7 @@
       // Auto-stop at end of piece
       Tone.Transport.schedule(time => {
         Tone.Draw.schedule(() => stopPlayback(), time);
-      }, offsetBeats * spb);
+      }, totalBeats * spb);
 
       Tone.Transport.start();
     }

@@ -247,28 +247,41 @@ def generate_fallback_audio(midi_obj: MidiFile, output_path: str) -> Tuple[Optio
         from scipy.io import wavfile
         from pydub import AudioSegment
 
-        # Parse MIDI to get notes and timing
-        notes = []
-        current_time = 0
+        # Read actual tempo from MIDI (set_tempo meta message)
+        sec_per_tick = 0.5 / midi_obj.ticks_per_beat  # default: 120 BPM
         for track in midi_obj.tracks:
             for msg in track:
+                if msg.type == 'set_tempo':
+                    sec_per_tick = msg.tempo / 1_000_000 / midi_obj.ticks_per_beat
+                    break
+
+        # Parse MIDI — match note_on with note_off to get real durations
+        notes = []
+        active = {}  # note_num -> absolute start tick
+        current_tick = 0
+        for track in midi_obj.tracks:
+            for msg in track:
+                current_tick += msg.time
                 if msg.type == 'note_on' and msg.velocity > 0:
-                    notes.append((msg.note, current_time, msg.time))
-                current_time += msg.time
+                    active[msg.note] = current_tick
+                elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+                    if msg.note in active:
+                        start = active.pop(msg.note)
+                        notes.append((msg.note, start, current_tick - start))
 
         # Generate simple sine wave audio
         sample_rate = SAMPLE_RATE
-        total_ticks = sum(msg.time for track in midi_obj.tracks for msg in track)
-        total_seconds = total_ticks * (0.5 / TICKS_PER_BEAT)  # Assuming 120 BPM
+        total_ticks = max((s + d for _, s, d in notes), default=0)
+        total_seconds = total_ticks * sec_per_tick
         audio_data = np.zeros(int(sample_rate * total_seconds) + sample_rate)  # Add 1 second buffer
 
         position = 0
         for note, start_time, duration in notes:
             # Convert MIDI note to frequency
             freq = 440 * (2 ** ((note - 69) / 12))
-            # Convert ticks to seconds
-            start_sec = start_time * (0.5 / TICKS_PER_BEAT)
-            duration_sec = duration * (0.5 / TICKS_PER_BEAT)
+            # Convert ticks to seconds using actual tempo
+            start_sec = start_time * sec_per_tick
+            duration_sec = duration * sec_per_tick
 
             # Generate sine wave
             t = np.linspace(0, duration_sec, int(sample_rate * duration_sec), endpoint=False)
@@ -287,18 +300,22 @@ def generate_fallback_audio(midi_obj: MidiFile, output_path: str) -> Tuple[Optio
         else:
             audio_data = np.int16(audio_data)
 
-        # Save as WAV then convert to MP3
+        # Save as WAV
         wav_path = output_path.replace('.mp3', '.wav')
         wavfile.write(wav_path, sample_rate, audio_data)
 
         sound = AudioSegment.from_wav(wav_path)
-        sound.export(output_path, format="mp3")
 
-        # Move to static directory
-        static_mp3_path = os.path.join('static', f'exercise_{uuid.uuid4().hex}.mp3')
-        shutil.move(output_path, static_mp3_path)
+        # Try MP3 (needs ffmpeg); if unavailable, keep WAV — browsers play both
+        try:
+            sound.export(output_path, format="mp3")
+            static_audio_path = os.path.join('static', f'exercise_{uuid.uuid4().hex}.mp3')
+            shutil.move(output_path, static_audio_path)
+        except Exception:
+            static_audio_path = os.path.join('static', f'exercise_{uuid.uuid4().hex}.wav')
+            shutil.move(wav_path, static_audio_path)
 
-        return static_mp3_path, sound.duration_seconds
+        return static_audio_path, sound.duration_seconds
     except ImportError as e:
         print(f"Required packages not available for fallback audio: {e}")
         return None, 0

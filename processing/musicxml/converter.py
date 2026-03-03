@@ -19,6 +19,7 @@ from typing import Optional
 from music21 import clef as clef_module
 from music21 import key, metadata as metadata_module, meter, note, stream
 from music21 import tie as tie_module
+from music21.instrument import fromString as instrument_from_string
 
 
 # ---------------------------------------------------------------------------
@@ -107,6 +108,7 @@ def convert_to_musicxml(
     clef: str = 'treble',
     output_path: Optional[str] = None,
     title: str = '',
+    instrument: str = 'Piano',
 ) -> str:
     """
     Convert a HarmonyHub JSON exercise file to a MusicXML file.
@@ -118,6 +120,8 @@ def convert_to_musicxml(
         clef:        Clef name: 'treble' (default), 'bass', 'alto', or 'tenor'.
         output_path: Destination path for the .musicxml file. Defaults to the
                      same directory as the input with a .musicxml extension.
+        title:       Title of the piece.
+        instrument:  Instrument name (e.g., 'Trumpet', 'Piano', 'Violin').
 
     Returns:
         Absolute path to the generated MusicXML file.
@@ -135,8 +139,19 @@ def convert_to_musicxml(
     score = stream.Score()
     md = metadata_module.Metadata()
     md.title = title or Path(file_path).stem
+    md.composer = 'HarmonyHub'
+    md.copyright = 'HarmonyHub'
     score.insert(0, md)
+    
     part = stream.Part()
+    part.partName = instrument
+    part.partAbbreviation = instrument[:3].upper()  # e.g., "TRP" for Trumpet
+    
+    # Set MIDI instrument
+    instr = instrument_from_string(instrument)
+    if instr:
+        part.insert(0, instr)
+    
     score.append(part)
 
     measure_number = 1
