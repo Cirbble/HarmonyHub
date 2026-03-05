@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HarmonyHub Challange Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    form {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #444;
+    }
+
+    select, input[type="number"], input[type="text"] {
+      padding: 0.45rem 0.6rem;
+      border: 1px solid #d1d1d6;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #fafafa;
+      width: 100%;
+    }
+
+    label.full-width {
+      grid-column: 1 / -1;
+    }
+
+    form button {
+      grid-column: 1 / -1;
+      padding: 0.75rem;
+      background: #0071e3;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover:not(:disabled) { background: #0077ed; }
+    button:disabled { background: #aaa; cursor: default; }
+
+    #status {
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      color: #555;
+      min-height: 1.2em;
+      text-align: center;
+    }
+
+    #error-box {
+      margin-top: 1rem;
+      background: #fff3f3;
+      border: 1px solid #f5c2c2;
+      color: #c0392b;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      max-width: 560px;
+      width: 100%;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    #osmd-container {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 900px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+      min-height: 100px;
+    }
+
+    #transport {
+      margin-top: 1rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    #transport button {
+      padding: 0.5rem 1rem;
+      background: #0071e3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #transport button:hover { background: #0077ed; }
+
+    #midi-download {
+      padding: 0.5rem 1rem;
+      border: 1px solid #0071e3;
+      color: #0071e3;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #midi-download:hover { background: #0071e3; color: #fff; }
+
+    #musicxml-download {
+      padding: 0.5rem 1rem;
+      border: 1px solid #0071e3;
+      color: #0071e3;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #musicxml-download:hover { background: #0071e3; color: #fff; }
+
+    #pdf-download {
+      padding: 0.5rem 1rem;
+      border: 1px solid #0071e3;
+      color: #0071e3;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #pdf-download:hover { background: #0071e3; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <h1>HarmonyHub</h1>
+  <h1>Eric's Submission</h1>
+
+  <form id="gen-form">
+    <label>
+      Instrument
+      <select name="instrument">
+        <option>Trumpet</option>
+        <option>Piano</option>
+        <option>Violin</option>
+        <option>Clarinet</option>
+        <option>Flute</option>
+      </select>
+    </label>
+
+    <label>
+      Level
+      <select name="level">
+        <option>Beginner</option>
+        <option selected>Intermediate</option>
+        <option>Advanced</option>
+      </select>
+    </label>
+
+    <label>
+      Key
+      <select name="key">
+        <option>C Major</option>
+        <option>G Major</option>
+        <option>D Major</option>
+        <option>F Major</option>
+        <option>Bb Major</option>
+        <option>A Minor</option>
+        <option>E Minor</option>
+      </select>
+    </label>
+
+    <label>
+      Time Signature
+      <select name="time_signature">
+        <option selected>4/4</option>
+        <option>3/4</option>
+      </select>
+    </label>
+
+    <label>
+      Measures
+      <input type="number" name="measures" value="4" min="1" max="16" />
+    </label>
+
+    <label>
+      Tempo (BPM)
+      <input type="number" name="tempo" value="60" min="40" max="200" />
+    </label>
+
+    <label class="full-width">
+      Custom Prompt (optional)
+      <input type="text" name="custom_prompt" placeholder="e.g. Focus on scale runs and arpeggios" />
+    </label>
+
+    <button type="submit" id="gen-btn">Generate</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="error-box"></div>
+
+  <div id="transport" style="display:none;">
+    <button id="btn-play"  type="button">&#9654; Play</button>
+    <button id="btn-pause" type="button">&#9646;&#9646; Pause</button>
+    <button id="btn-stop"  type="button">&#9632; Stop</button>
+    <a id="midi-download" href="#" download>Download MIDI</a>
+    <a id="musicxml-download" href="#" download>Download MusicXML</a>
+    <a id="pdf-download" href="#" download>Download PDF</a>
+  </div>
+
+  <div id="osmd-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/opensheetmusicdisplay@latest/build/opensheetmusicdisplay.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.6/build/Midi.js"></script>
+  <script>
+    const form = document.getElementById('gen-form');
+    const btn = document.getElementById('gen-btn');
+    const statusEl = document.getElementById('status');
+    const errorBox = document.getElementById('error-box');
+    const osmdContainer = document.getElementById('osmd-container');
+
+    let osmd = null;
+    let currentNotes      = [];
+    let currentTempo      = 60;
+    let currentMidiUrl    = null;
+    let currentInstrument = 'Trumpet';
+    let cursorTimes       = [];
+    let activeSynth       = null;
+
+    // General MIDI instrument names used by the MusyngKite soundfont set on gleitz CDN
+    const SOUNDFONT_NAMES = {
+      'Trumpet': 'trumpet', 'Piano': 'acoustic_grand_piano',
+      'Violin':  'violin',  'Clarinet': 'clarinet', 'Flute': 'flute',
+    };
+
+    // Oscillator fallback if CDN is unreachable
+    const INSTRUMENT_SYNTH_OPTIONS = {
+      'Trumpet':  { oscillator: { type: 'sawtooth' }, envelope: { attack: 0.02,  decay: 0.1, sustain: 0.8, release: 0.1 } },
+      'Piano':    { oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.4, sustain: 0.0, release: 1.0 } },
+      'Violin':   { oscillator: { type: 'sawtooth' }, envelope: { attack: 0.1,   decay: 0.1, sustain: 0.9, release: 0.3 } },
+      'Clarinet': { oscillator: { type: 'square'   }, envelope: { attack: 0.02,  decay: 0.1, sustain: 0.8, release: 0.1 } },
+      'Flute':    { oscillator: { type: 'sine'     }, envelope: { attack: 0.05,  decay: 0.1, sustain: 0.7, release: 0.2 } },
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Stop any in-progress playback before resetting
+      stopPlayback();
+      document.getElementById('transport').style.display = 'none';
+
+      // Reset UI
+      errorBox.style.display = 'none';
+      errorBox.textContent = '';
+      osmdContainer.innerHTML = '';
+      statusEl.textContent = 'Generating exercise\u2026';
+      btn.disabled = true;
+
+      const fd = new FormData(form);
+      const payload = {
+        instrument:     fd.get('instrument'),
+        level:          fd.get('level'),
+        key:            fd.get('key'),
+        time_signature: fd.get('time_signature'),
+        measures:       parseInt(fd.get('measures'), 10),
+        tempo:          parseInt(fd.get('tempo'), 10),
+        custom_prompt:  fd.get('custom_prompt') || '',
+      };
+
+      let data;
+      try {
+        const resp = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        data = await resp.json();
+      } catch (err) {
+        showError('Network error: ' + err.message);
+        return;
+      } finally {
+        btn.disabled = false;
+        statusEl.textContent = '';
+      }
+
+      if (data.error) {
+        showError(data.error);
+        return;
+      }
+
+      statusEl.textContent = 'Rendering score\u2026';
+      try {
+        osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(osmdContainer, {
+          autoResize: true,
+          drawTitle: true,
+        });
+        await osmd.load(data.musicxml_url);
+        osmd.render();
+
+        currentNotes      = data.notes;
+        currentTempo      = data.tempo;
+        currentMidiUrl    = data.midi_url;
+        currentInstrument = payload.instrument;
+        document.getElementById('midi-download').href = data.midi_url;
+        document.getElementById('musicxml-download').href = data.musicxml_url;
+        document.getElementById('pdf-download').href = data.pdf_url;
+        document.getElementById('transport').style.display = 'flex';
+        buildCursorTimes();
+
+        statusEl.textContent = '';
+      } catch (err) {
+        showError('Render error: ' + err.message);
+      }
+    });
+
+    function buildCursorTimes() {
+      cursorTimes = [];
+      osmd.cursor.show();
+      osmd.cursor.reset();
+      while (!osmd.cursor.iterator.EndReached) {
+        cursorTimes.push(osmd.cursor.iterator.currentTimeStamp.realValue);
+        osmd.cursor.next();
+      }
+      osmd.cursor.reset();
+      osmd.cursor.hide();
+    }
+
+    async function startPlayback() {
+      await Tone.start();
+      Tone.Transport.cancel();
+      Tone.Transport.stop();
+      Tone.Transport.position = 0;
+      if (activeSynth) { activeSynth.dispose(); activeSynth = null; }
+
+      const spb = 60.0 / currentTempo;  // seconds per beat
+
+      // Calculate total duration from notes (used for synth scheduling + auto-stop)
+      let totalBeats = 0;
+      for (const item of currentNotes) totalBeats += item.duration * 0.5;
+
+      try {
+        // Load real instrument samples from MusyngKite soundfont CDN
+        const sfName  = SOUNDFONT_NAMES[currentInstrument] || 'acoustic_grand_piano';
+        const baseUrl = `https://gleitz.github.io/midi-js-soundfonts/MusyngKite/${sfName}-mp3/`;
+        const sampleNotes = ['C3', 'Gb3', 'C4', 'Gb4', 'C5', 'Gb5', 'C6'];
+        const urls = {};
+        sampleNotes.forEach(n => { urls[n] = `${n}.mp3`; });
+
+        activeSynth = new Tone.Sampler({ urls, baseUrl }).toDestination();
+
+        // Parse the MIDI file so note scheduling matches exactly what the download plays
+        const midi = await Midi.fromUrl(currentMidiUrl);
+        await Tone.loaded();
+
+        midi.tracks.forEach(track => {
+          track.notes.forEach(note => {
+            Tone.Transport.schedule(time => {
+              activeSynth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+            }, note.time);
+          });
+        });
+      } catch (e) {
+        // Fallback: Tone.Synth oscillators (no internet / CDN blocked)
+        console.warn('Soundfont load failed, using synth fallback:', e);
+        if (activeSynth) { activeSynth.dispose(); activeSynth = null; }
+        const synthOpts = INSTRUMENT_SYNTH_OPTIONS[currentInstrument] || INSTRUMENT_SYNTH_OPTIONS['Trumpet'];
+        activeSynth = new Tone.Synth(synthOpts).toDestination();
+        let offsetBeats = 0;
+        for (const item of currentNotes) {
+          const durBeats = item.duration * 0.5;
+          if (item.note.toLowerCase() !== 'rest') {
+            const t = offsetBeats * spb;
+            const d = durBeats * spb - 0.02;
+            (function(schedTime, dur, noteName) {
+              Tone.Transport.schedule(time => {
+                activeSynth.triggerAttackRelease(noteName, dur, time);
+              }, schedTime);
+            })(t, d, item.note);
+          }
+          offsetBeats += durBeats;
+        }
+      }
+
+      // Schedule cursor advances from OSMD scan
+      osmd.cursor.show();
+      osmd.cursor.reset();
+      for (let i = 0; i < cursorTimes.length; i++) {
+        const t = cursorTimes[i] * 4 * spb;  // realValue is in whole notes; ×4 → quarter beats
+        (function(idx) {
+          Tone.Transport.schedule(time => {
+            Tone.Draw.schedule(() => { if (idx > 0) osmd.cursor.next(); }, time);
+          }, t);
+        })(i);
+      }
+
+      // Auto-stop at end of piece
+      Tone.Transport.schedule(time => {
+        Tone.Draw.schedule(() => stopPlayback(), time);
+      }, totalBeats * spb);
+
+      Tone.Transport.start();
+    }
+
+    function pausePlayback() { Tone.Transport.pause(); }
+
+    function stopPlayback() {
+      Tone.Transport.stop();
+      Tone.Transport.cancel();
+      if (activeSynth) { activeSynth.dispose(); activeSynth = null; }
+      if (osmd) { osmd.cursor.reset(); osmd.cursor.hide(); }
+    }
+
+    document.getElementById('btn-play').addEventListener('click', async () => {
+      if (Tone.Transport.state === 'paused') Tone.Transport.start();
+      else await startPlayback();
+    });
+    document.getElementById('btn-pause').addEventListener('click', pausePlayback);
+    document.getElementById('btn-stop').addEventListener('click', stopPlayback);
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
+      statusEl.textContent = '';
+    }
+  </script>
+</body>
+</html>

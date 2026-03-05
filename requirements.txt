@@ -14,3 +14,4 @@ python-dotenv==1.0.0  # For loading environment variables from .env file
 verovio==6.0.1        # MusicXML → SVG rendering (no external apps needed)
 cairosvg==2.8.2       # SVG → PNG (full SVG spec support via Cairo)
 reportlab==4.4.10     # PDF generation
+flask                 # Web interface

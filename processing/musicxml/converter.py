@@ -3,14 +3,12 @@
 """
 MusicXML Converter
 ==================
-Converts HarmonyHub JSON exercise files to MusicXML format.
+Converts LLM JSON exercise files to .MusicXML format.
 
-Duration encoding: 1 unit = 1 eighth note (quarterLength 0.5).
-  1 → eighth, 2 → quarter, 3 → dotted quarter, 4 → half,
-  6 → dotted half, 8 → whole.
+Each unit of duration is counted as an eigth note
 
 Notes that cross a barline are automatically split and tied.
-Rests (note name == "rest") are never tied across barlines.
+Rests are denoted as note: "rest" in the json
 """
 
 import json
@@ -19,8 +17,9 @@ from pathlib import Path
 from typing import Optional
 
 from music21 import clef as clef_module
-from music21 import key, meter, note, stream
+from music21 import key, metadata as metadata_module, meter, note, stream
 from music21 import tie as tie_module
+from music21.instrument import fromString as instrument_from_string
 
 
 # ---------------------------------------------------------------------------
@@ -108,6 +107,8 @@ def convert_to_musicxml(
     time_sig: str,
     clef: str = 'treble',
     output_path: Optional[str] = None,
+    title: str = '',
+    instrument: str = 'Piano',
 ) -> str:
     """
     Convert a HarmonyHub JSON exercise file to a MusicXML file.
@@ -119,6 +120,8 @@ def convert_to_musicxml(
         clef:        Clef name: 'treble' (default), 'bass', 'alto', or 'tenor'.
         output_path: Destination path for the .musicxml file. Defaults to the
                      same directory as the input with a .musicxml extension.
+        title:       Title of the piece.
+        instrument:  Instrument name (e.g., 'Trumpet', 'Piano', 'Violin').
 
     Returns:
         Absolute path to the generated MusicXML file.
@@ -134,7 +137,21 @@ def convert_to_musicxml(
 
     # Build score/part structure
     score = stream.Score()
+    md = metadata_module.Metadata()
+    md.title = title or Path(file_path).stem
+    md.composer = 'HarmonyHub'
+    md.copyright = 'HarmonyHub'
+    score.insert(0, md)
+    
     part = stream.Part()
+    part.partName = instrument
+    part.partAbbreviation = instrument[:3].upper()  # e.g., "TRP" for Trumpet
+    
+    # Set MIDI instrument
+    instr = instrument_from_string(instrument)
+    if instr:
+        part.insert(0, instr)
+    
     score.append(part)
 
     measure_number = 1

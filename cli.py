@@ -224,6 +224,8 @@ def generate(
                 convert_to_musicxml(
                     json_path_for_notation, key_str, time_sig_str,
                     output_path=musicxml_out,
+                    title=base_filename,
+                    instrument=instrument_str,
                 )
             output_files.append(("MusicXML", musicxml_out))
         except Exception as e:
