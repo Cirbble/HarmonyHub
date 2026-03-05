@@ -226,6 +226,9 @@ def convert_to_pdf(
         output_path = Path(output_path)
 
     tk = verovio.toolkit()
+    resource_path = os.path.join(os.path.dirname(verovio.__file__), "data")
+    if os.path.isdir(resource_path):
+        tk.setResourcePath(resource_path)
     tk.setOptions({
         "pageWidth":  _A4_VRV_W,
         "pageHeight": _A4_VRV_H,

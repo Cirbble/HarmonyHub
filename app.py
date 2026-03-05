@@ -20,6 +20,7 @@ from lib.music_generation.generator import generate_exercise
 from processing.audio.converter import midi_to_mp3
 from processing.midi.converter import json_to_midi
 from processing.musicxml.converter import convert_to_musicxml
+from processing.musicxml.pdf_renderer import convert_to_pdf
 
 app = Flask(__name__)
 
@@ -70,6 +71,9 @@ def generate():
             instrument=instrument,
         )
 
+        pdf_path = OUTPUT_DIR / f"{base_filename}.pdf"
+        convert_to_pdf(str(musicxml_path), output_path=str(pdf_path))
+
         midi_obj = json_to_midi(notes, instrument, tempo, time_signature, measures)
         midi_obj.save(str(midi_path))
 
@@ -92,6 +96,7 @@ def generate():
     return jsonify({
         "musicxml_url": f"/output/{base_filename}.musicxml",
         "midi_url":     f"/output/{base_filename}.mid",
+        "pdf_url":      f"/output/{base_filename}.pdf",
         "mp3_url":      mp3_url,
         "notes":        notes,
         "tempo":        tempo,
